@@ -1,0 +1,3 @@
+C:/Users/Mikec/CLionProjects/Jaccard/cmake-build-debug/CMakeFiles/Jaccard.dir
+C:/Users/Mikec/CLionProjects/Jaccard/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Mikec/CLionProjects/Jaccard/cmake-build-debug/CMakeFiles/rebuild_cache.dir
