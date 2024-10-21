@@ -75,7 +75,7 @@ int main(void) {
     // Comparar las palabras encontradas usando Jaccard
     float similitud = compararJaccard(nodo1, nodo2);
     printf("%s\n", "\n\nPor Arbol");
-    printf("Similitud Jaccard entre 'A' y 'B': %f\n", 0.56);
+    printf("Similitud Jaccard entre 'A' y 'B': %f\n", similitud);
 
     return 0;
 }
