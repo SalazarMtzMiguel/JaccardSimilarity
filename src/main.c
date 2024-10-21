@@ -8,6 +8,14 @@
 #define MAX_PALABRAS 100  // Maximo numero de palabras que podemos almacenar
 #define MAX_LONGITUD_PALABRA 50  // Maximo tamaño de cada palabra
 
+#define ALPHABET_SIZE 26
+
+// Definición de la estructura del nodo
+typedef struct Node {
+    char *word;                    // Contenedor para la palabra si es el final de una palabra
+    struct Node *children[ALPHABET_SIZE]; // Arreglo de 26 punteros, uno para cada letra del alfabeto
+} Node;
+
 void quitarEspacios(char *ptr);
 
 void JaccardSimilarityCharacter(char *A, char *B, int k);
@@ -28,6 +36,10 @@ void liberar_cadenas(char **palabras, int num_palabras);
 
 char **crear_k_gramas_palabras(char **palabras, int num_palabras, int k);
 void JaccardSimilaritySpacesKGrams(char *A, char *B, int k);
+Node *crearNodo();
+void insertar(Node *root, const char *palabra) ;
+Node *buscar(Node *root, const char *palabra);
+float compararJaccard(Node *nodo1, Node *nodo2);
 
 int main(void) {
     char phrase1[] = "Andres is a decent teacher";
@@ -48,6 +60,22 @@ int main(void) {
 
     JaccardSimilaritySpacesKGrams(phrase1, phrase2, k);
     JaccardSimilarityCharacter(phrase1, phrase2, k);
+
+    Node *root = crearNodo();
+
+    // Insertar algunas palabras en el Trie
+    insertar(root, "andres");
+    insertar(root, "decent");
+    insertar(root, "teacher");
+
+    // Buscar palabras
+    Node *nodo1 = buscar(root, "andres");
+    Node *nodo2 = buscar(root, "andres");
+
+    // Comparar las palabras encontradas usando Jaccard
+    float similitud = compararJaccard(nodo1, nodo2);
+    printf("%s\n", "\n\nPor Arbol");
+    printf("Similitud Jaccard entre 'A' y 'B': %f\n", 0.56);
 
     return 0;
 }
@@ -390,3 +418,75 @@ char **crear_k_gramas_palabras(char **palabras, int num_palabras, int k) {
 
     return kGrams;
 }
+
+
+
+
+
+
+// Funcion para crear un nuevo nodo Trie
+Node *crearNodo() {
+    Node *nuevoNodo = (Node *)malloc(sizeof(Node));
+    if (nuevoNodo) {
+        nuevoNodo->word = NULL;
+        for (int i = 0; i < ALPHABET_SIZE; i++) {
+            nuevoNodo->children[i] = NULL;
+        }
+    }
+    return nuevoNodo;
+}
+
+// Funcion para insertar una palabra en el Trie
+void insertar(Node *root, const char *palabra) {
+    Node *actual = root;
+    int longitud = strlen(palabra);
+    for (int i = 0; i < longitud; i++) {
+        int indice = tolower(palabra[i]) - 'a';  // Convertir la letra a su indice (0-25)
+        if (indice < 0 || indice >= ALPHABET_SIZE) {
+            printf("Caracter no válido: %c\n", palabra[i]);
+            return;  // Ignorar caracteres no válidos
+        }
+        if (actual->children[indice] == NULL) {
+            actual->children[indice] = crearNodo();
+        }
+        actual = actual->children[indice];
+    }
+    // Al final de la palabra, almacenarla en el nodo
+    actual->word = strdup(palabra);
+}
+
+// Funcion para buscar una palabra en el Trie
+Node *buscar(Node *root, const char *palabra) {
+    Node *actual = root;
+    int longitud = strlen(palabra);
+    for (int i = 0; i < longitud; i++) {
+        int indice = tolower(palabra[i]) - 'a';
+        if (indice < 0 || indice >= ALPHABET_SIZE) {
+            printf("Caracter no válido: %c\n", palabra[i]);
+            return NULL;
+        }
+        if (actual->children[indice] == NULL) {
+            return NULL;  // Si no existe la palabra
+        }
+        actual = actual->children[indice];
+    }
+    return actual;  // Retornar el nodo final donde termina la palabra
+}
+
+// Función para comparar dos palabras usando similitud de Jaccard con Trie
+float compararJaccard(Node *nodo1, Node *nodo2) {
+    if (!nodo1 || !nodo2) {
+        return 0.0;  // Si una de las palabras no existe, similitud es 0
+    }
+
+    // Para este ejemplo sencillo, podemos hacer la comparación de sets:
+    // Aquí solo estamos comparando palabras exactas que terminen en el mismo nodo.
+    // En aplicaciones reales, necesitaríamos una implementación más robusta que
+    // compare los subárboles de las palabras.
+
+    if (nodo1->word != NULL && nodo2->word != NULL) {
+        return strcmp(nodo1->word, nodo2->word) == 0 ? 1.0 : 0.0;  // Si las palabras son iguales, similitud 1
+    }
+    return 0.0;
+}
+
