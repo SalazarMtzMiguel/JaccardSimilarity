@@ -5,12 +5,10 @@
 
 #include "../include/set.h"
 
-#define MAX_PALABRAS 100  // Máximo número de palabras que podemos almacenar
-#define MAX_LONGITUD_PALABRA 50  // Máximo tamaño de cada palabra
+#define MAX_PALABRAS 100  // Maximo numero de palabras que podemos almacenar
+#define MAX_LONGITUD_PALABRA 50  // Maximo tamaño de cada palabra
 
 void quitarEspacios(char *ptr);
-
-void JaccardSimilaritySpaces(char *A, char *B, int k);
 
 void JaccardSimilarityCharacter(char *A, char *B, int k);
 
@@ -20,46 +18,113 @@ void imprime_cadenas(char **palabras, int longitud);
 
 void convertir_a_minusculas(char *A);
 
-char* subcadena(const char *cadena, int inicio, int longitud);
+char *subcadena(const char *cadena, int inicio, int longitud);
 
 char **split_por_k_characters(const char *cadena, int k, int *num_fragmentos);
+
 void liberar_k_grams(char **k_grams, int num_k_grams);
+
+void liberar_cadenas(char **palabras, int num_palabras);
+
+char **crear_k_gramas_palabras(char **palabras, int num_palabras, int k);
+void JaccardSimilaritySpacesKGrams(char *A, char *B, int k);
 
 int main(void) {
     char phrase1[] = "Andres is a decent teacher";
     char phrase2[] = "Andres is a decent profesor";
     char phrase3[] = "Andres is a terrible researcher";
+    int k = 2;
+
+    printf("%s\n", "Texto A original ");
+    printf("%s\n", phrase1);
+    printf("%s\n", "Texto B original: ");
+    printf("%s\n", phrase2);
+    printf("%s\n", "Numero de k-gramas: ");
+    printf("%d\n", k);
 
     convertir_a_minusculas(phrase1);
     convertir_a_minusculas(phrase2);
     convertir_a_minusculas(phrase3);
 
-    int k = 3;
-
-    JaccardSimilaritySpaces(phrase1, phrase2, k);
+    JaccardSimilaritySpacesKGrams(phrase1, phrase2, k);
     JaccardSimilarityCharacter(phrase1, phrase2, k);
 
     return 0;
 }
 
-void JaccardSimilaritySpaces(char *A, char *B, int k) {
-    printf("%s\n", "Verificando por palabras");
+void JaccardSimilaritySpacesKGrams(char *A, char *B, int k) {
+    printf("%s\n", "\nVerificando por k-gramas de palabras");
+
     int num_palabras_A, num_palabras_B;
 
-    // Llamamos a la función que hace el split
+    // Dividimos las cadenas en palabras
     char **palabrasA = split_por_espacios(A, &num_palabras_A);
     char **palabrasB = split_por_espacios(B, &num_palabras_B);
 
-    // Imprimir resultados
-    imprime_cadenas(palabrasA, num_palabras_A);
-    imprime_cadenas(palabrasB, num_palabras_B);
+    // Crear k-gramas de palabras para A
+    char **kGramsA = crear_k_gramas_palabras(palabrasA, num_palabras_A, k);
+    int num_k_grams_A = num_palabras_A;
+    // El numero de k-gramas sera igual al numero de palabras (por comportamiento ciclico)
 
-    // Aquí podrías calcular la similitud de Jaccard basándote en las palabras de cada cadena
-    // ...
+    // Crear k-gramas de palabras para B
+    char **kGramsB = crear_k_gramas_palabras(palabrasB, num_palabras_B, k);
+    int num_k_grams_B = num_palabras_B;
 
-    // Liberar la memoria usada por los arrays de palabras
-    liberar_k_grams(palabrasA, num_palabras_A);
-    liberar_k_grams(palabrasB, num_palabras_B);
+    // Crear los sets
+    Set *setA = crear_set();
+    Set *setB = crear_set();
+
+    // Agregar los k-gramas al setA
+    for (int i = 0; i < num_k_grams_A; i++) {
+        agregar(setA, kGramsA[i]);
+    }
+
+    // Agregar los k-gramas al setB
+    for (int i = 0; i < num_k_grams_B; i++) {
+        agregar(setB, kGramsB[i]);
+    }
+
+    // Calcular la unión e intersección
+    Set *setUnion = crear_set();
+    Set *setIntersection = crear_set();
+
+    for (int i = 0; i < setA->tamano; ++i) {
+        agregar(setUnion, setA->elementos[i]);
+        if (contiene(setB, setA->elementos[i])) {
+            agregar(setIntersection, setA->elementos[i]);
+        }
+    }
+    for (int i = 0; i < setB->tamano; ++i) {
+        agregar(setUnion, setB->elementos[i]);
+    }
+
+
+    printf("%s\n", "Imprimiendo Set A");
+    imprimir_set(setA);
+
+    printf("%s\n", "Imprimiendo Set B");
+    imprimir_set(setB);
+
+    printf("%s\n", "Imprimiendo Set Union");
+    imprimir_set(setUnion);
+
+    printf("%s\n", "Imprimiendo Set intersection");
+    imprimir_set(setIntersection);
+
+
+    printf("%s\n", "El valor de similitud por Jaccard es:");
+    printf("%f\n", (float) setIntersection->tamano / (float) setUnion->tamano);
+    printf("%s", "Dado que la cardinalidad de la interseccion es: ");
+    printf("%d", (int) setIntersection->tamano);
+    printf("%s", " y la cardinalidad de la union es: ");
+    printf("%d\n", (int) setUnion->tamano);
+
+
+    // Liberar memoria
+    liberar_k_grams(kGramsA, num_k_grams_A);
+    liberar_k_grams(kGramsB, num_k_grams_B);
+    liberar_set(setA);
+    liberar_set(setB);
 }
 
 void JaccardSimilarityCharacter(char *A, char *B, int k) {
@@ -67,7 +132,7 @@ void JaccardSimilarityCharacter(char *A, char *B, int k) {
     quitarEspacios(A);
     quitarEspacios(B);
 
-    printf("%s\n", "Verificando por caracteres");
+    printf("%s\n", "\nVerificando por caracteres");
 
     // Obtener subcadena de A
     char *subA = subcadena(A, 0, k); // Subcadena de los primeros k caracteres de A
@@ -149,7 +214,7 @@ void JaccardSimilarityCharacter(char *A, char *B, int k) {
     Set *setIntersection = crear_set();
     for (int i = 0; i < setA->tamano; ++i) {
         agregar(setUnion, setA->elementos[i]);
-        if (contiene(setB, setA->elementos[i])) {agregar(setIntersection, setA->elementos[i]);}
+        if (contiene(setB, setA->elementos[i])) { agregar(setIntersection, setA->elementos[i]); }
     }
     for (int i = 0; i < setB->tamano; ++i) {
         agregar(setUnion, setB->elementos[i]);
@@ -161,11 +226,11 @@ void JaccardSimilarityCharacter(char *A, char *B, int k) {
     imprimir_set(setIntersection);
 
     printf("%s\n", "El valor de similitud por Jaccard es:");
-    printf("%f\n", (float)setIntersection->tamano / (float)setUnion->tamano);
+    printf("%f\n", (float) setIntersection->tamano / (float) setUnion->tamano);
     printf("%s", "Dado que la cardinalidad de la interseccion es: ");
-    printf("%d", (int)setIntersection->tamano);
-    printf("%s"," y la cardinalidad de la union es: ");
-    printf("%d", (int)setUnion->tamano);
+    printf("%d", setIntersection->tamano);
+    printf("%s", " y la cardinalidad de la union es: ");
+    printf("%d", setUnion->tamano);
 
     //
 
@@ -174,6 +239,8 @@ void JaccardSimilarityCharacter(char *A, char *B, int k) {
     liberar_k_grams(cadenasB, num_k_grams_B);
     liberar_set(setA);
     liberar_set(setB);
+    liberar_set(setUnion);
+    liberar_set(setIntersection);
     free(newA); // Liberar la nueva cadena A
     free(newB); // Liberar la nueva cadena B
 }
@@ -198,15 +265,15 @@ void quitarEspacios(char *ptr) {
 
 char **split_por_k_characters(const char *cadena, int k, int *num_fragmentos) {
     int longitud_cadena = strlen(cadena);
-    *num_fragmentos = longitud_cadena - k + 1; // Calculamos el número correcto de fragmentos
+    *num_fragmentos = longitud_cadena - k + 1; // Calculamos el numero correcto de fragmentos
 
     // Validamos si hay suficientes caracteres para formar k-grams
     if (*num_fragmentos <= 0) {
         *num_fragmentos = 0;
-        return NULL;  // No hay suficientes caracteres para formar subcadenas
+        return NULL; // No hay suficientes caracteres para formar subcadenas
     }
 
-    // Reservamos espacio para el número de fragmentos que habrá
+    // Reservamos espacio para el numero de fragmentos que habra
     char **resultado = malloc(*num_fragmentos * sizeof(char *));
     if (!resultado) {
         printf("Error al reservar memoria para k-grams\n");
@@ -246,7 +313,7 @@ char **split_por_espacios(const char *cadena, int *num_palabras) {
         token = strtok(NULL, " "); // Siguiente token
     }
 
-    *num_palabras = contador; // Guardamos el número de palabras encontradas
+    *num_palabras = contador; // Guardamos el numero de palabras encontradas
 
     free(cadena_copia); // Liberamos la copia de la cadena original
     return resultado;
@@ -260,10 +327,10 @@ void imprime_cadenas(char **palabras, int longitud) {
     }
 }
 
-char* subcadena(const char *cadena, int inicio, int longitud) {
-    // Verificar que el rango sea válido
+char *subcadena(const char *cadena, int inicio, int longitud) {
+    // Verificar que el rango sea valido
     if (inicio < 0 || longitud <= 0 || inicio + longitud > strlen(cadena)) {
-        return NULL;  // Si el rango no es válido, devolver NULL
+        return NULL; // Si el rango no es valido, devolver NULL
     }
 
     // Reservar memoria para la subcadena (+1 para el terminador nulo)
@@ -287,4 +354,39 @@ void liberar_k_grams(char **k_grams, int num_k_grams) {
     }
     // Liberar el arreglo de punteros
     free(k_grams);
+}
+
+void liberar_cadenas(char **palabras, int num_palabras) {
+    for (int i = 0; i < num_palabras; i++) {
+        free(palabras[i]);
+    }
+    free(palabras);
+}
+
+// Función para crear k-gramas de palabras
+char **crear_k_gramas_palabras(char **palabras, int num_palabras, int k) {
+    char **kGrams = malloc(num_palabras * sizeof(char *));
+    if (!kGrams) {
+        printf("Error al reservar memoria para k-gramas de palabras\n");
+        return NULL;
+    }
+
+    for (int i = 0; i < num_palabras; i++) {
+        // Reservar memoria para cada k-grama
+        kGrams[i] = malloc(MAX_LONGITUD_PALABRA * k);
+        if (!kGrams[i]) {
+            printf("Error al reservar memoria para k-grama\n");
+            liberar_k_grams(kGrams, i); // Liberar los k-gramas creados hasta ahora
+            return NULL;
+        }
+
+        // Formar el k-grama ciclico
+        strcpy(kGrams[i], palabras[i]); // Primera palabra
+        for (int j = 1; j < k; j++) {
+            strcat(kGrams[i], " "); // Añadir espacio
+            strcat(kGrams[i], palabras[(i + j) % num_palabras]); // Añadir las siguientes palabras ciclicamente
+        }
+    }
+
+    return kGrams;
 }

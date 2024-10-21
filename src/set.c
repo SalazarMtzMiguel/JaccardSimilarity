@@ -15,7 +15,7 @@
     int capacidad;
 } Set;*/
 
-// Función para inicializar el set
+// Funcion para inicializar el set
 Set* crear_set() {
     Set *nuevo_set = (Set*) malloc(sizeof(Set));
     nuevo_set->elementos = (char**) malloc(TAM_INICIAL * sizeof(char*));
@@ -24,7 +24,7 @@ Set* crear_set() {
     return nuevo_set;
 }
 
-// Función para liberar la memoria del set
+// Funcion para liberar la memoria del set
 void liberar_set(Set *set) {
     for (int i = 0; i < set->tamano; i++) {
         free(set->elementos[i]);
@@ -33,7 +33,7 @@ void liberar_set(Set *set) {
     free(set);
 }
 
-// Función para verificar si un string ya está en el set
+// Funcion para verificar si un string ya esta en el set
 int contiene(Set *set, const char *elemento) {
     for (int i = 0; i < set->tamano; i++) {
         if (strcmp(set->elementos[i], elemento) == 0) {
@@ -43,7 +43,7 @@ int contiene(Set *set, const char *elemento) {
     return 0;
 }
 
-// Función para agregar un string al set (si no está ya presente)
+// Funcion para agregar un string al set (si no esta ya presente)
 void agregar(Set *set, const char *elemento) {
     if (!contiene(set, elemento)) {
         // Redimensionar si es necesario
@@ -58,7 +58,7 @@ void agregar(Set *set, const char *elemento) {
     }
 }
 
-// Función para imprimir el contenido del set
+// Funcion para imprimir el contenido del set
 void imprimir_set(Set *set) {
     printf("{ ");
     for (int i = 0; i < set->tamano; i++) {

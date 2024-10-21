@@ -14,7 +14,6 @@ typedef struct {
     int capacidad;
 } Set;
 
-// Declaración de funciones
 Set *crear_set();
 
 void liberar_set(Set *set);
